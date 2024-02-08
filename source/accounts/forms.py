@@ -16,3 +16,7 @@ class UserChangeForm(forms.ModelForm):
     class Meta:
         model = get_user_model()
         fields = ('first_name', 'last_name', 'email', 'avatar', 'gender', 'phone_number', 'user_information')
+
+
+class SearchForm(forms.Form):
+    search = forms.CharField(max_length=50, required=False, label='Поиск')

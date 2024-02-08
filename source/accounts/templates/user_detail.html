@@ -3,30 +3,74 @@
 {% block title %}{{ user_obj.get_full_name }}{% endblock %}
 {% block menu %}
 
-        {% if request.user.is_authenticated and request.user == user_obj %}
-            <a class="nav-link" aria-current="page" href="{% url 'accounts:user_change' request.user.pk %}">Редактировать</a>
-            <a class="nav-link" aria-current="page" href="{% url 'accounts:password_change' request.user.pk %}">Смена пароля</a>
-        {% endif %}
+
 {% endblock %}
 
+
+{% if request.user.is_authenticated and request.user == user_obj %}
+    <a class="nav-link" aria-current="page" href="">Редактировать</a>
+    <a class="nav-link" aria-current="page" href="">Смена пароля</a>
+{% endif %}
 {% block content %}
-    <h1>Личная страница пользователя {{ user_obj.get_full_name|default:user_obj.username }}</h1>
-    <div class="card mb-3">
-        <div class="row g-0">
-            <div class="col-md-4">
-                <img src="{{ user_obj.avatar.url }}" class="img-fluid rounded-start" alt="...">
-            </div>
-            <div class="col-md-8">
-                <div class="card-body">
-                    <h5 class="card-title">Имя пользователя: {{ user_obj.username }}</h5>
-                    <p class="card-text">Имя: {{ user_obj.first_name }}</p>
-                    <p class="card-text">Фамилия: {{ user_obj.last_name }}</p>
-                    <p class="card-text">Дата рождения: {{ user_obj.profile.birth_date|date:'d.m.Y' }}</p>
-                    <p class="card-text">Почта: {{ user_obj.email }}</p>
-                </div>
+
+    <div class="d-flex mt-5">
+        <div class="mx-5 align-self-center">
+            <div class="d-inline-block rounded-circle overflow-hidden" style="width: 200px; height: 200px; ">
+                <img src="{{ user_obj.avatar.url }}" class="object-fit-cover w-100 h-100" alt="...">
             </div>
         </div>
+        <div class="mx-5 align-self-center">
+            <div class="d-flex">
+                <h2 class="fw-lighter">{{ user_obj.username }}</h2>
+                {% if request.user.is_authenticated and request.user == user_obj %}
+                    <a class="btn btn-outline-secondary align-self-center ms-3"
+                       href="{% url 'accounts:user_change' request.user.pk %}"
+                       role="button">Редактировать профиль</a>
+                    <a class="btn btn-outline-secondary align-self-center ms-3"
+                       href="{% url 'accounts:password_change' request.user.pk %}"
+                       role="button">Смена пароля</a>
+                {% endif %}
+            </div>
+            <p class="fw-light">
+                <span class="me-5">{{ user_obj.publication_counter }} публикации</span>
+                <span class="me-5">{{ user_obj.subscriber_counter }} подписчиков</span>
+                <span class="me-5">Подписки: {{ user_obj.subscription_counter }}</span>
+            </p>
+            <p>{{ user_obj.get_full_name }}</p>
+            <p>{{ user_obj.user_information }}</p>
+            {% if user_obj != request.user %}
+                <form action="{% url 'accounts:user_subscription' user_obj.pk %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">
+                        {% if user_obj in request.user.subscriptions_users.all %}
+                            Отписаться
+                        {% else %}
+                            Подписаться
+                        {% endif %}
+                    </button>
+                </form>
+            {% endif %}
+        </div>
     </div>
-   
+
+
+    <div class="row row-cols-3 justify-content-between">
+        {% if request.user.is_authenticated and request.user == user_obj %}
+            <a href="{% url 'webapp:publication_create' %}"
+               class="col px-0 btn btn-outline-success d-flex justify-content-center"
+               style="width: 400px; height: 400px">
+                <i class="bi bi-plus-lg fs-1 align-self-center"></i>
+            </a>
+        {% endif %}
+        {% for publication in user_obj.publications.all %}
+            <a href="#" class="col  d-inline-block px-0" style="width: 400px; height: 400px">
+                <img src="{{ publication.picture.url }}" class="w-100 h-100 object-fit-cover">
+            </a>
+        {% endfor %}
+
+
+    </div>
+
+
 
 {% endblock %}
