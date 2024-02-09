@@ -7,7 +7,7 @@
 
     <h1 style="text-align: center">Вход</h1>
 
-    <form action="" method="post" class="text-center">
+    <form action="" method="post" class="text-center" id="loginForm">
         {% csrf_token %}
         {% if has_error %}
             <p class="form-error">Неверное имя пользователя или пароль.</p>
@@ -22,4 +22,63 @@
         </div>
         <button type="submit" class="btn btn-primary">Войти</button>
     </form>
+{% endblock %}
+
+{% block script %}
+    <script>
+        async function makeRequest(url, method = 'GET', data = {}, token = null) {
+            let headers = {
+                "Content-Type": "application/json"
+            };
+            if (token) {
+                headers['Authorization'] = 'Token ' + token;
+            }
+
+            if (method !== "GET") {
+                options = {method, headers, body: JSON.stringify(data),};
+            } else {
+                options = {method, headers};
+            }
+            let response = await fetch(url, options);
+            if (response.ok) {  // нормальный ответ
+                return await response.json();
+            } else {            // ошибка
+                let error = new Error(response.statusText);
+                error.response = response;
+                throw error;
+            }
+
+        }
+
+        async function onSubmit(e) {
+            e.preventDefault()
+            let username = e.target.username.value;
+            let password = e.target.password.value;
+            try {
+                let response = await makeRequest('http://localhost:8000/api/login/', "POST",
+                    {
+                        "username": username,
+                        "password": password
+                    }
+                );
+                localStorage.setItem('apiToken', response.token);
+            } finally {
+                e.target.submit()
+            }
+
+
+        }
+
+
+        async function onLoad() {
+
+            let loginForm = document.getElementById('loginForm');
+            loginForm.addEventListener('submit', onSubmit);
+        }
+
+
+        window.addEventListener('load', onLoad);
+
+
+    </script>
 {% endblock %}

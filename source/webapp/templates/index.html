@@ -34,19 +34,19 @@
             <img src="{{ publication.picture.url }}" class="card-img-top" alt="...">
             <div class="card-body">
                 <div class="card-title">
-                    <form action="{% url 'webapp:publication_like' publication.pk %}" method="post" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-link">
+                <button type="button" class="btn btn-primary publication_like" 
+                        data-like="{% if request.user in publication.users_like.all %}unlike{% else %}like{% endif %}"
+                        data-url="{% url 'api:publication-detail' publication.pk %}"
+                        data-count-id="count-{{ publication.id }}"
+                >
                             {% if request.user in publication.users_like.all %}
                                 <i class="bi bi-heart-fill"></i>
                             {% else %}
                                 <i class="bi bi-heart"></i>
-                            {% endif %}
-                        </button>
-                    </form>
+                            {% endif %}</button>
                     <i class="bi bi-chat"></i>
                 </div>
-                <p class="card-text"><small class="text-body-secondary">{{ publication.likes_count }} отметок
+                <p class="card-text"><small class="text-body-secondary"><span id="count-{{ publication.id }}">{{ publication.likes_count }}</span> отметок
                     "Нравиться"</small></p>
                 <p class="card-text">{{ publication.description }}</p>
                 <p class="card-text"><small class="text-body-secondary">{{ publication.created }}</small></p>
@@ -60,6 +60,73 @@
 
 
 
+{% endblock %}
+
+{% block script %}
+    <script>
+        async function makeRequest(url, method = 'GET', data = {}, token = null) {
+            let headers = {
+                "Content-Type": "application/json"
+            };
+            if (token) {
+                headers['Authorization'] = 'Token ' + token;
+            }
+
+            if (method !== "GET") {
+                options = {method, headers, body: JSON.stringify(data),};
+            } else {
+                options = {method, headers};
+            }
+            let response = await fetch(url, options);
+            if (response.ok) {  // нормальный ответ
+                return await response.json();
+            } else {            // ошибка
+                let error = new Error(response.statusText);
+                error.response = response;
+                throw error;
+            }
+
+        }
+
+        async function onClick(e) {
+            e.preventDefault()
+            let d = e.currentTarget.dataset['like'];
+            let url = e.currentTarget.dataset['url'] + `${d}/`;
+            let span_count = document.getElementById(e.currentTarget.dataset['countId']);
+            let method = 'POST';
+            if(d === 'unlike'){
+                method = 'DELETE';
+                e.currentTarget.innerHTML = '<i class="bi bi-heart"></i>';
+                e.currentTarget.dataset['like'] = 'like';
+            }else {
+                e.currentTarget.innerHTML = '<i class="bi bi-heart-fill"></i>'
+                
+                e.currentTarget.dataset['like'] = 'unlike';
+            }
+            
+            let response = await makeRequest(url, method,{}, localStorage.getItem('apiToken'));
+            console.log(response)
+            
+            span_count.innerText = response.likes_count;
+
+            
+
+        }
+
+
+        async function onLoad() {
+
+            let buttons = document.getElementsByClassName('publication_like');
+            for(let button of buttons){
+                button.addEventListener('click', onClick);
+            }
+        }
+
+
+        window.addEventListener('load', onLoad);
+
+
+    </script>
 {% endblock %}
 
 
